@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daga - Admin & Seller Center (Style Shopify)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <!-- TOP BAR GLOBALE -->
+    <header class="shopify-topbar">
+        <div class="topbar-brand">
+            <h1>DAGA</h1>
+            <span class="badge-pro">Enterprise Hub</span>
+        </div>
+        <div class="topbar-nav">
+            <button onclick="switchMainTab('buyer')" id="top-btn-buyer" class="top-nav-btn active">🛍️ Voir le Marché</button>
+            <button onclick="switchMainTab('seller')" id="top-btn-seller" class="top-nav-btn">🏪 Espace Vendeur (Admin Boutique)</button>
+            <button onclick="switchMainTab('admin')" id="top-btn-admin" class="top-nav-btn admin-badge">🔒 Super Admin Daga</button>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+
+        <!-- SECTION 1 : CATALOGUE PUBLIC -->
+        <section id="section-buyer" class="app-section">
+            <div class="container-shopify">
+                <h2>Le Marché de Ouagadougou</h2>
+                <p>Explorez les boutiques vérifiées et commandez directement par WhatsApp.</p>
+                
+                <div class="search-bar-box">
+                    <input type="text" id="search-input" placeholder="🔍 Rechercher un produit, une marque..." onkeyup="filterProducts()">
+                    <select id="category-filter" onchange="filterProducts()">
+                        <option value="">Toutes les catégories</option>
+                        <option value="Mode">Mode & Vêtements</option>
+                        <option value="Electro">High-Tech & Électronique</option>
+                        <option value="Maison">Maison & Déco</option>
+                        <option value="Autre">Autres</option>
+                    </select>
+                </div>
+                <div id="products-list"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 2 : ESPACE VENDEUR (STYLE SHOPIFY ADMIN) -->
+        <section id="section-seller" class="app-section hidden">
+            
+            <!-- Écran de connexion Vendeur -->
+            <div id="seller-login-container" class="container-shopify" style="max-width: 500px; margin-top: 60px;">
+                <div class="shopify-card text-center">
+                    <h2>Connexion Vendeur Daga</h2>
+                    <p>Entrez votre numéro WhatsApp pour accéder à votre tableau de bord.</p>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Numéro WhatsApp :</label>
+                        <input type="text" id="seller-phone" placeholder="Ex: +22651892952">
+                    </div>
+                    <button onclick="loginSeller()" class="btn-shopify-primary">Accéder à mon administration</button>
+                    <div id="seller-login-alert" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- Tableau de bord Vendeur avec Sidebar type Shopify -->
+            <div id="seller-dashboard-container" class="hidden shopify-admin-layout">
+                
+                <!-- SIDEBAR SHOPIFY -->
+                <aside class="shopify-sidebar">
+                    <div class="sidebar-shop-name" id="sidebar-shop-title">Ma Boutique</div>
+                    <ul class="sidebar-menu">
+                        <li><button onclick="switchSellerTab('home')" id="s-tab-home" class="sidebar-btn active">🏠 Accueil & Analytics</button></li>
+                        <li><button onclick="switchSellerTab('products')" id="s-tab-products" class="sidebar-btn">📦 Produits & Catalogue</button></li>
+                        <li><button onclick="switchSellerTab('settings')" id="s-tab-settings" class="sidebar-btn">⚙️ Paramètres & Design</button></li>
+                        <li><button onclick="switchSellerTab('preferences')" id="s-tab-preferences" class="sidebar-btn">🛠️ Préférences & SEO</button></li>
+                        <li><button onclick="switchSellerTab('notifications')" id="s-tab-notifications" class="sidebar-btn">🔔 Notifications <span id="notif-badge" class="count-badge">1</span></button></li>
+                    </ul>
+                    <div class="sidebar-footer">
+                        <button onclick="logoutSeller()" class="btn-subtle-danger">Déconnexion</button>
+                    </div>
+                </aside>
+
+                <!-- CONTENU PRINCIPAL DE L'ADMIN VENDEUR -->
+                <main class="shopify-content">
+                    
+                    <!-- 1. ACCUEIL & ANALYTICS -->
+                    <div id="seller-content-home" class="seller-tab-pane">
+                        <div class="page-header-shopify">
+                            <h2>Tableau de bord</h2>
+                            <p>Aperçu des performances de votre boutique en temps réel.</p>
+                        </div>
+                        <div id="subscription-status-box" class="alert"></div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h4>Articles Actifs</h4>
+                                <p id="seller-stat-products">0</p>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Jours d'Abonnement</h4>
+                                <p id="seller-stat-days">0</p>
+                            </div>
+                        </div>
+
+                        <div class="shopify-card">
+                            <h3>Progression de l'abonnement mensuel</h3>
+                            <div class="progress-bg" style="margin-top: 15px;">
+                                <div id="seller-progress-bar" class="progress-fill">0%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. PRODUITS -->
+                    <div id="seller-content-products" class="seller-tab-pane hidden">
+                        <div class="page-header-shopify">
+                            <h2>Catalogue des Produits</h2>
+                            <p>Ajoutez et gérez les articles visibles sur le marché.</p>
+                        </div>
+                        <div class="shopify-card">
+                            <h3>Ajouter un nouvel article</h3>
+                            <div class="form-group">
+                                <label>Nom de l'article :</label>
+                                <input type="text" id="p-name" placeholder="Ex: Chaussures Nike Air">
+                            </div>
+                            <div class="form-group">
+                                <label>Prix (FCFA) :</label>
+                                <input type="text" id="p-price" placeholder="Ex: 25000 FCFA">
+                            </div>
+                            <div class="form-group">
+                                <label>Description :</label>
+                                <textarea id="p-pdesc" rows="2" placeholder="Détails, tailles disponibles..."></textarea>
+                            </div>
+                            <button onclick="publishProduct()" class="btn-shopify-primary">Mettre en ligne</button>
+                        </div>
+                        <div class="shopify-card" style="margin-top: 20px;">
+                            <h3>Articles dans votre boutique</h3>
+                            <div id="my-products-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. PARAMÈTRES & DESIGN -->
+                    <div id="seller-content-settings" class="seller-tab-pane hidden">
+                        <div class="page-header-shopify">
+                            <h2>Paramètres de la Boutique</h2>
+                            <p>Gérez votre identité visuelle, vos réseaux sociaux et vos informations de contact.</p>
+                        </div>
+                        <div class="shopify-card">
+                            <div class="form-group">
+                                <label>Nom de la Boutique :</label>
+                                <input type="text" id="shop-name" placeholder="Ex: Faso Shop">
+                            </div>
+                            <div class="form-group">
+                                <label>Catégorie principale :</label>
+                                <select id="shop-category">
+                                    <option value="Mode">Mode & Vêtements</option>
+                                    <option value="Electro">High-Tech & Électronique</option>
+                                    <option value="Maison">Maison & Déco</option>
+                                    <option value="Autre">Autres</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Bio / Description :</label>
+                                <textarea id="shop-desc" rows="2" placeholder="Présentation de votre enseigne..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Lien Facebook :</label>
+                                <input type="text" id="shop-fb" placeholder="https://facebook.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Lien TikTok :</label>
+                                <input type="text" id="shop-tiktok" placeholder="https://tiktok.com/@...">
+                            </div>
+                            <button onclick="saveShopSettings()" class="btn-shopify-dark">Enregistrer les modifications</button>
+                        </div>
+                    </div>
+
+                    <!-- 4. PRÉFÉRENCES -->
+                    <div id="seller-content-preferences" class="seller-tab-pane hidden">
+                        <div class="page-header-shopify">
+                            <h2>Préférences de la Boutique</h2>
+                            <p>Paramétrez les options avancées de votre espace de vente.</p>
+                        </div>
+                        <div class="shopify-card">
+                            <div class="form-group">
+                                <label>Devise principale :</label>
+                                <input type="text" value="FCFA (Franc CFA)" disabled style="background: #f1f2f3;">
+                            </div>
+                            <div class="form-group">
+                                <label>Canal de commande client par défaut :</label>
+                                <input type="text" value="WhatsApp Direct" disabled style="background: #f1f2f3;">
+                            </div>
+                            <p style="color: #6d7175; font-size: 0.9em;">Dada sécurise vos flux en connectant directement vos acheteurs à votre ligne WhatsApp professionnelle.</p>
+                        </div>
+                    </div>
+
+                    <!-- 5. NOTIFICATIONS -->
+                    <div id="seller-content-notifications" class="seller-tab-pane hidden">
+                        <div class="page-header-shopify">
+                            <h2>Centre de Notifications</h2>
+                            <p>Restez informé de l'état de votre abonnement et de vos validations.</p>
+                        </div>
+                        <div class="shopify-card">
+                            <div class="notif-item">
+                                <strong>🔔 Bienvenue sur Daga !</strong>
+                                <p style="margin: 5px 0 0 0; color: #6d7175; font-size: 0.9em;">Votre espace vendeur est configuré. Contactez l'administrateur au +226 51 89 29 52 pour activer vos 30 jours de visibilité.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </section>
+
+        <!-- SECTION 3 : SUPER ADMIN -->
+        <section id="section-admin" class="app-section hidden">
+            <div class="container-shopify" style="max-width: 800px;">
+                <h2>Super Administration Daga</h2>
+                <p>Contrôle global des abonnements et des flux de la plateforme.</p>
+
+                <div id="admin-login-box" class="shopify-card">
+                    <div class="form-group">
+                        <label>Mot de passe Super Admin :</label>
+                        <input type="password" id="admin-pass" placeholder="Entrez le mot de passe secret">
+                    </div>
+                    <button onclick="verifyAdminPassword()" class="btn-shopify-primary">Se connecter au Dashboard Admin</button>
+                    <div id="admin-alert" style="margin-top: 10px;"></div>
+                </div>
+
+                <div id="admin-dashboard" class="hidden">
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card" style="background: #008060; color: white;">
+                            <h4>Produits Actifs</h4>
+                            <p id="admin-stat-products">0</p>
+                        </div>
+                        <div class="stat-card" style="background: #202223; color: white;">
+                            <h4>Boutiques Enregistrées</h4>
+                            <p id="admin-stat-sellers">0</p>
+                        </div>
+                    </div>
+
+                    <div class="shopify-card">
+                        <h3>Valider / Prolonger un Abonnement (30 Jours)</h3>
+                        <div class="form-group">
+                            <label>Numéro WhatsApp du vendeur :</label>
+                            <input type="text" id="new-seller-phone" placeholder="Ex: +22651892952">
+                        </div>
+                        <button onclick="adminRenewSubscription()" class="btn-shopify-primary">Valider 30 Jours d'accès</button>
+                        <div id="admin-renew-alert" style="margin-top: 10px;"></div>
+                    </div>
+
+                    <div class="shopify-card" style="margin-top: 20px;">
+                        <h3>Répertoire des Vendeurs</h3>
+                        <div id="admin-sellers-list" style="overflow-x: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
